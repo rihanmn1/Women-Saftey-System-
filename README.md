@@ -4,6 +4,12 @@ WISE is an experimental browser interface for pairing an ESP32-based safety devi
 
 > **Prototype status:** WISE is research and demonstration software. It has not been independently audited or certified as an emergency system. Do not rely on it as the only way to request help or contact emergency services.
 
+## Recognition and open-source vision
+
+This work grew out of **Nirbhaya – Unobtrusively Assured Safety**, which won **1st Prize at the 9th ACCS Design Challenge 2024**. The project was selected from nine finalist teams, with the finals held at IIIT Bangalore on March 23, 2025. [Read the competition announcement and project story](https://lnkd.in/p/gFRdVn8f).
+
+We are open-sourcing WISE so that developers, researchers, hardware builders, accessibility specialists, and safety advocates can help make the project more reliable, inclusive, and useful. Contributions that improve testing, device compatibility, documentation, privacy, accessibility, and real-world usability are especially welcome.
+
 ## What is included
 
 - A responsive, keyboard-accessible pairing interface
