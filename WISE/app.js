@@ -4,6 +4,7 @@ let isLoading = false;
 
 // DOM elements
 const urlInput = document.getElementById('device-url');
+const pairForm = document.getElementById('pair-form');
 const pairButton = document.getElementById('pair-button');
 const videoThumbnail = document.getElementById('video-thumbnail');
 const videoModal = document.getElementById('video-modal');
@@ -44,26 +45,20 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeEventListeners() {
     // URL input change handler
     if (urlInput) {
-        urlInput.addEventListener('input', handleUrlChange);
-        
-        // Enhanced URL input handler with validation feedback
         urlInput.addEventListener('input', function(e) {
             handleUrlChange(e);
             debouncedValidation(e.target.value.trim());
         });
-        
-        // Form submission prevention
-        urlInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handlePairDevice();
-            }
+    }
+
+    if (pairForm) {
+        pairForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            handlePairDevice();
         });
     }
-    
-    // Pair device button click handler
+
     if (pairButton) {
-        pairButton.addEventListener('click', handlePairDevice);
         
         // Add visual feedback for button interactions
         pairButton.addEventListener('mousedown', function() {
@@ -125,33 +120,20 @@ function updatePairButtonState() {
 
 // URL validation
 function isValidURL(string) {
-    if (!string) return false;
-    
-    try {
-        const url = new URL(string);
-        return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch (error) {
-        // Check if it's a valid IP format without protocol
-        const ipPattern = /^https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/;
-        const simplePattern = /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/;
-        return ipPattern.test(string) || string.includes('http') || simplePattern.test(string);
-    }
+    return Boolean(window.WiseUrl && window.WiseUrl.validateDeviceUrl(string).valid);
 }
 
 // Device Pairing Handler
 async function handlePairDevice() {
     if (!currentUrl || isLoading) return;
     
-    // Auto-fix URL if it doesn't have protocol
-    let finalUrl = currentUrl;
-    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-        finalUrl = 'http://' + finalUrl;
-    }
-    
-    if (!isValidURL(finalUrl)) {
-        showToast('Please enter a valid URL format', 'error');
+    const validation = window.WiseUrl.validateDeviceUrl(currentUrl);
+    if (!validation.valid) {
+        showToast(validation.reason, 'error');
         return;
     }
+
+    const finalUrl = validation.url;
     
     try {
         setLoadingState(true);
@@ -160,21 +142,17 @@ async function handlePairDevice() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
         
-        const response = await fetch(finalUrl, {
+        await fetch(finalUrl, {
             method: 'GET',
             signal: controller.signal,
-            mode: 'no-cors', // Allow cross-origin requests to IoT devices
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
+            mode: 'no-cors'
         });
         
         clearTimeout(timeoutId);
         
-        // For no-cors mode, we can't read the response, but if we get here without error, assume success
+        // An opaque no-cors response confirms dispatch, not device-side processing.
         console.log('Device pairing request sent to:', finalUrl);
-        showToast('Devices Paired Successfully!', 'success');
+        showToast('Pairing request sent. Confirm the result on your device.', 'success');
         
     } catch (error) {
         console.error('Device pairing error:', error);
@@ -184,12 +162,7 @@ async function handlePairDevice() {
         if (error.name === 'AbortError') {
             errorMessage = 'Request timed out. Please check your device connection.';
         } else if (error.message.includes('fetch') || error.name === 'TypeError') {
-            // For IoT devices, network errors might still mean the request was sent successfully
-            console.log('Network error - this might be normal for IoT devices');
-            showToast('Pairing request sent (IoT device may not support CORS)', 'success');
-            return;
-        } else if (error.message.includes('HTTP')) {
-            errorMessage = `Device error: ${error.message}`;
+            errorMessage = 'Could not reach the device. Check the URL and local network.';
         }
         
         showToast(errorMessage, 'error');
@@ -370,7 +343,7 @@ function debounce(func, wait) {
 const debouncedValidation = debounce((value) => {
     if (!urlInput) return;
     
-    if (value && !isValidURL(value) && !value.match(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/)) {
+    if (value && !isValidURL(value)) {
         urlInput.style.borderColor = '#ef4444';
         urlInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
     } else {
@@ -403,12 +376,3 @@ window.addEventListener('online', function() {
 window.addEventListener('offline', function() {
     showToast('Connection lost - device pairing unavailable', 'error');
 });
-
-// Export functions for potential testing (if needed)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        isValidURL,
-        showToast,
-        handlePairDevice
-    };
-}

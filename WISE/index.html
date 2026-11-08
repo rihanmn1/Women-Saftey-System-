@@ -16,21 +16,27 @@
                         <p class="subtitle fade-up-delay-1">
                             <span class="highlight">IOT</span> safety system for women and children.
                         </p>
-                        <div class="input-section fade-up-delay-2">
+                        <form class="input-section fade-up-delay-2" id="pair-form">
+                            <label class="sr-only" for="device-url">ESP32 device URL</label>
                             <input 
                                 type="text" 
                                 id="device-url" 
                                 class="url-input" 
                                 placeholder="Enter ESP32 device URL"
+                                aria-describedby="device-url-format safety-note"
+                                autocomplete="url"
                             >
-                            <button id="pair-button" class="pair-button">
+                            <button id="pair-button" class="pair-button" type="submit">
                                 <span class="button-text">Pair Device</span>
                                 <span class="arrow">→</span>
                             </button>
-                        </div>
-                        <div class="format-text fade-up-delay-3">
+                        </form>
+                        <div class="format-text fade-up-delay-3" id="device-url-format">
                             <span>Format: http://&lt;ESP32_IP_ADDRESS&gt;/set?value=&lt;PHONE_NUMBER&gt;</span>
                         </div>
+                        <p class="safety-note" id="safety-note">
+                            Prototype only. Pair devices on a trusted local network; do not rely on WISE as your only emergency system.
+                        </p>
                     </div>
                 </div>
                 
@@ -84,6 +90,7 @@
         </div>
     </div>
 
+    <script src="url-utils.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
